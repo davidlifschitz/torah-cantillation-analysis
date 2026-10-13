@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "Please cite this software and separately credit the source textual editions. Include the exact code commit and corpus snapshot in research citations."
+title: "Torah Cantillation Analysis"
+type: software
+authors:
+  - family-names: Lifschitz
+    given-names: David
+repository-code: "https://github.com/davidlifschitz/torah-cantillation-analysis"
+license: MIT
+keywords:
+  - cantillation
+  - Torah
+  - Hebrew
+  - reproducible research
+  - exploratory data analysis

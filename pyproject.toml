@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "torah-cantillation-analysis"
+version = "0.1.0"
+description = "Reproducible, edition-aware research on Torah cantillation"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+  "httpx==0.28.1", "pandas==2.2.3", "numpy==2.3.5",
+  "scipy==1.17.0", "scikit-learn==1.8.0", "matplotlib==3.10.8",
+  "nbformat==5.10.4", "nbclient==0.10.4", "ipykernel==7.2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.0.2", "ruff>=0.14,<1"]
+parquet = ["pyarrow>=19,<30"]
+
+[project.scripts]
+torah-cantillation = "torah_cantillation.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

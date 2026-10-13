@@ -1,0 +1,111 @@
+name: Research pipeline
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - '.github/workflows/research.yml'
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: 'Immutable primary-edition snapshot ID; new ID means a new acquisition'
+        default: 'primary-20261013'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: research-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  research:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    env:
+      SNAPSHOT: ${{ inputs.snapshot || 'primary-20261013' }}
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - run: python -m pip install uv==0.10.0
+      - name: Resolve initial lock and install
+        run: |
+          if [ ! -f uv.lock ]; then uv lock; fi
+          uv sync --locked --extra dev
+      - name: Offline quality checks
+        id: tests
+        run: |
+          uv run --no-sync ruff check src tests scripts
+          uv run --no-sync pytest -q --junitxml=reports/quality-tests.xml
+          uv run --no-sync python -m compileall -q src scripts
+      - name: Generate notebook sources
+        run: uv run --no-sync python scripts/notebooks.py --snapshot "$SNAPSHOT"
+      - name: Restore approved existing snapshot
+        run: uv run --no-sync python scripts/snapshot_archive.py restore --snapshot "$SNAPSHOT"
+      - name: Acquire explicit primary edition
+        run: uv run --no-sync torah-cantillation fetch --snapshot "$SNAPSHOT"
+      - name: Build evidence and validate coverage
+        run: uv run --no-sync torah-cantillation build --snapshot "$SNAPSHOT"
+      - name: Execute descriptive and discovery analyses
+        run: uv run --no-sync torah-cantillation analyze --snapshot "$SNAPSHOT"
+      - name: Verify offline deterministic reproduction
+        run: uv run --no-sync python scripts/check_reproduction.py --snapshot "$SNAPSHOT"
+      - name: Execute all eleven notebooks
+        run: uv run --no-sync python scripts/notebooks.py --snapshot "$SNAPSHOT" --execute
+      - name: Archive approved source snapshot
+        id: completed
+        run: uv run --no-sync python scripts/snapshot_archive.py pack --snapshot "$SNAPSHOT"
+      - name: Commit notebooks, lock and successful findings
+        if: always() && steps.tests.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPLETED: ${{ steps.completed.outcome }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add uv.lock notebooks reports/quality-tests.xml
+          if [ "$COMPLETED" = 'success' ]; then
+            git add "reports/$SNAPSHOT" "data/manifests/$SNAPSHOT.json" "data/snapshots/$SNAPSHOT.zip"
+            MESSAGE="research: publish validated $SNAPSHOT outputs and executed notebooks"
+          else
+            MESSAGE='chore: record locked environment and notebook sources; live run incomplete'
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "$MESSAGE"
+            AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $AUTH" push origin HEAD:main
+          fi
+      - name: Attach evidence and source code
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: research-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            src/
+            tests/
+            scripts/
+            docs/
+            notebooks/
+            reports/
+            data/manifests/
+            data/snapshots/
+            pyproject.toml
+            uv.lock
+            README.md
+            LICENSE
+            DATA_LICENSES.md
+            CITATION.cff
