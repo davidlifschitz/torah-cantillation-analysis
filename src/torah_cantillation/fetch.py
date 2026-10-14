@@ -45,6 +45,7 @@ class SefariaClient:
         self.pace = max(0.0, pace)
         self.http = httpx.Client(
             timeout=60, follow_redirects=True, transport=transport,
+            trust_env=not offline,
             headers={"User-Agent": "torah-cantillation-analysis/0.1 (+https://github.com/davidlifschitz/torah-cantillation-analysis)"},
         )
         self.records: dict[str, dict] = {}

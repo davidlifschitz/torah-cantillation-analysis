@@ -36,6 +36,12 @@ Token-relative positions use `(position-1)/max(1, token_count-1)`. Entropy is de
 - High-surprise verses are ranked by held-out mean transition surprise. This does not establish rarity under every model, textual error, historical change, or causation.
 - Cross-edition comparisons align explicit verse references and compare raw text, consonants and both sequence representations. `not_run` is used when only one edition was acquired; that is not evidence of agreement.
 
+### Follow-up robustness checks
+
+The 2026-10-14 follow-up centers each eligible verse's normalized accent-profile vector within its exact lexical-token count. A multivariate pseudo-F summarizes the remaining book association. Book labels are permuted only among verses of the same exact length; length strata represented by only one book do not enter this comparison. Literal and token-distinct representations are reported separately, with a Bonferroni adjustment across those two tests. The verse-level permutation is exploratory and does not model dependence among verses in a chapter; effect size and the chapter-bootstrap check should be reported alongside its p-value.
+
+Longer four- and five-mark sequences are mined within eligible verse boundaries, never across verses. Counts are overlapping window occurrences and are accompanied by distinct-verse support, book support, and per-book rates per 1,000 eligible windows. The screen of at least 20 occurrences in at least 10 verses is descriptive, not a significance threshold. A chapter-block bootstrap resamples chapters with replacement within each book and refits the fixed published k=2 solution; adjusted Rand index measures sensitivity of the full-snapshot assignment to chapter composition, not the validity of clusters as linguistic categories.
+
 ## Reproducibility
 
 Record source snapshot, code commit/file checksums, dependency lock, Python/Unicode/package versions, seeds, parameters, inclusion rules and output checksums. Rebuild from saved raw bytes; do not redownload on notebook execution. Test deterministic table regeneration. Floating-point differences across platforms may require documented tolerances; image and notebook metadata need not be byte-identical.

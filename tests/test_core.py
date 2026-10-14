@@ -172,7 +172,7 @@ def test_shared_title_structure():
     assert parashah_ranges(payload)[0]["name"] == "Shemot"
 
 
-def test_cache_and_offline_integrity(tmp_path):
+def test_cache_and_offline_integrity(tmp_path, monkeypatch):
     hits = []
 
     def handler(request):
@@ -183,6 +183,9 @@ def test_cache_and_offline_integrity(tmp_path):
         assert client.get("/test")[0] == {"ok": True}
         assert client.get("/test")[0] == {"ok": True}
     assert len(hits) == 1
+    for name in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "all_proxy"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ALL_PROXY", "socks5h://127.0.0.1:1")
     with SefariaClient(tmp_path, offline=True) as client:
         assert client.get("/test")[0] == {"ok": True}
         with pytest.raises(FileNotFoundError):
