@@ -27,6 +27,14 @@ Read the [computed findings](reports/primary-20261013/findings.md), browse the [
 
 The most frequent encoded signs in this snapshot are TIPEHA (11,290), MUNAH (9,462), MERKHA (9,120), ZAQEF QATAN (6,998) and PASHTA (6,378). Names are Unicode character names; they are not a complete traditional naming taxonomy. Counts come from [inventory.json](reports/primary-20261013/tables/inventory.json).
 
+## Follow-up robustness analysis
+
+The analysis-only follow-up [reuses `primary-20261013`](reports/primary-20261013-followup-20261014/findings.md); it does not reacquire or alter source text. It adds verse-bounded four- and five-mark motif tables, exact-token-count-conditioned book-profile comparisons, and chapter-resampled stability for the exploratory k=2 partition.
+
+- The most frequent token-distinct four-mark sequence appears 1,024 times in 966 distinct eligible verses across all five books. It is reported as an encoded sequence, not a functional accent unit.
+- After exact lexical-token-count centering, book-profile R² is 0.00256 for literal and 0.00260 for token-distinct profiles. The restricted-permutation p-value is 0.001 at 999 permutations (0.002 after adjustment across the two representations); the effect size is small, and verse-level shuffling does not model dependence within chapters.
+- Across 100 chapter-block bootstrap fits, the fixed k=2 partition has median adjusted Rand index 0.968 (5th–95th percentiles 0.902–0.993). This is stability evidence, not a linguistic or literary classification.
+
 ## Research scope
 
 | Track | Implemented outputs |
